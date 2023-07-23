@@ -73,7 +73,6 @@ while True:
                 if previous_minute is not None and current_minute != previous_minute:
                     if investment:
 
-                        #
                         positions = balance['info']['positions']
 
                         btcusdt_position = next((position for position in positions \
@@ -137,7 +136,7 @@ while True:
                                 symbol_details[symbol1]['previous_minute'] = previous_minute
 
                                 # API 호출 제한을 피하기 위해 약간의 딜레이를 주는 것이 좋음
-                                time.sleep(0.5)
+                                # time.sleep(0.5)
 
                                 continue
 
@@ -145,7 +144,9 @@ while True:
                 if previous_minute is not None and current_minute != previous_minute:
 
                     # 계좌 잔고 체크
-                    if free_balance <= 50:
+                    if free_balance <= 130:
+                        previous_minute = current_minute
+                        symbol_details[symbol1]['previous_minute'] = previous_minute
                         continue
 
                     if symbol1 == '1000LUNC/USDT':
@@ -194,12 +195,10 @@ while True:
                             break
 
                     if decision:
-                        down_price = last_open_price * 0.99
-                        up_price = last_open_price * 1.01
-                        investment_amount = 40 / last_open_price
-
+                        investment_amount = 2000 / last_open_price
                         investment = True
-
+                        short_enter_price = last_open_price * 0.985
+                        long_enter_price = last_open_price * 1.015
                         orders = [None] * 3
 
                         if long_or_short == 'short':
@@ -209,8 +208,22 @@ while True:
                                 type="LIMIT",
                                 side="sell",
                                 amount=investment_amount,
-                                price=last_open_price * 0.985
+                                price=short_enter_price
                             )
+                            print('order1 okay')
+
+                            balance = binance.fetch_balance(params={"type": "future"})
+                            positions = balance['info']['positions']
+
+                            entry_price = 0.0
+                            for position in positions:
+                                if position['symbol'] == symbol1.replace('/', ''):
+                                    entry_price = float(position['entryPrice'])
+                                    break
+
+                            downprice = entry_price * 0.99
+
+                            print(entry_price)
 
                             # take profit
                             orders[1] = binance.create_order(
@@ -218,9 +231,12 @@ while True:
                                 type="TAKE_PROFIT",
                                 side="buy",
                                 amount=investment_amount,
-                                price=down_price,
-                                params={'stopPrice': down_price}
+                                price=downprice,
+                                params={'stopPrice': downprice}
                             )
+                            print('order2 okay')
+
+                            upprice = entry_price * 1.01
 
                             # stop loss
                             orders[2] = binance.create_order(
@@ -228,9 +244,10 @@ while True:
                                 type="STOP",
                                 side="buy",
                                 amount=investment_amount,
-                                price=up_price,
-                                params={'stopPrice': up_price}
+                                price=upprice,
+                                params={'stopPrice': upprice}
                             )
+                            print('order3 okay')
 
                             # 계좌 잔고 업데이트
                             balance = binance.fetch_balance(params={"type": "future"})
@@ -243,8 +260,22 @@ while True:
                                 type="LIMIT",
                                 side="buy",
                                 amount=investment_amount,
-                                price=last_open_price * 1.015
+                                price=long_enter_price
                             )
+                            print('order1 okay')
+
+                            balance = binance.fetch_balance(params={"type": "future"})
+                            positions = balance['info']['positions']
+
+                            entry_price = 0.0
+                            for position in positions:
+                                if position['symbol'] == symbol1.replace('/', ''):
+                                    entry_price = float(position['entryPrice'])
+                                    break
+
+                            upprice = entry_price * 1.01
+
+                            print(entry_price)
 
                             # take profit
                             orders[1] = binance.create_order(
@@ -252,9 +283,12 @@ while True:
                                 type="TAKE_PROFIT",
                                 side="sell",
                                 amount=investment_amount,
-                                price=up_price,
-                                params={'stopPrice': up_price}
+                                price=upprice,
+                                params={'stopPrice': upprice}
                             )
+                            print('order2 okay')
+
+                            downprice = entry_price * 0.99
 
                             # stop loss
                             orders[2] = binance.create_order(
@@ -262,9 +296,10 @@ while True:
                                 type="STOP",
                                 side="sell",
                                 amount=investment_amount,
-                                price=down_price,
-                                params={'stopPrice': down_price}
+                                price=downprice,
+                                params={'stopPrice': downprice}
                             )
+                            print('order3 okay')
 
                             # 계좌 잔고 업데이트
                             balance = binance.fetch_balance(params={"type": "future"})
@@ -292,6 +327,8 @@ while True:
 
             except Exception as e:
                 print(f"An error occurred: {e}")
+                previous_minute = current_minute
+                symbol_details[symbol1]['previous_minute'] = previous_minute
                 continue
 
         # API 호출 제한을 피하기 위해 약간의 딜레이를 주는 것이 좋음
