@@ -22,14 +22,27 @@ binance = ccxt.binance(config={
     }
 })
 
-symbol_list = ['1000LUNC/USDT', '1000SHIB/USDT', '1000XEC/USDT', 'AAVE/USDT', 'ALGO/USDT', 'ALICE/USDT', \
-               'ALPHA/USDT', 'ANKR/USDT', 'APE/USDT', 'APT/USDT', 'ATA/USDT', 'ATOM/USDT', 'AXS/USDT', \
-               'BAKE/USDT', 'BAND/USDT', 'BEL/USDT', 'CELO/USDT', 'CHZ/USDT', 'CRV/USDT', 'DENT/USDT', \
-               'DOGE/USDT', 'DYDX/USDT', 'ENS/USDT', 'FIL/USDT', 'FLM/USDT', 'FOOTBALL/USDT', 'GALA/USDT', \
-               'GAL/USDT', 'GMT/USDT', 'GRT/USDT', 'GTC/USDT', 'INJ/USDT', 'JASMY/USDT', 'LIT/USDT', \
-               'LPT/USDT', 'LRC/USDT', 'LUNA2/USDT', 'MASK/USDT', 'NKN/USDT', 'ONE/USDT', 'OP/USDT', \
-               'PEOPLE/USDT', 'REN/USDT', 'RLC/USDT', 'RSR/USDT', 'SFP/USDT', 'SOL/USDT', 'STORJ/USDT', \
-               'SUSHI/USDT', 'TRB/USDT', 'UNFI/USDT', 'WOO/USDT', 'YFI/USDT'
+symbol_list = ['1000FLOKI/USDT', '1000LUNC/USDT', '1000PEPE/USDT', '1000SHIB/USDT', '1000XEC/USDT', '1INCH/USDT', \
+               'AAVE/USDT', 'ACH/USDT', 'AGIX/USDT', 'ALGO/USDT', 'ALICE/USDT', \
+               'ALPHA/USDT', 'ANKR/USDT', 'ANT/USDT', 'APE/USDT', 'APT/USDT', 'ARB/USDT', 'ARPA/USDT', 'AR/USDT', \
+               'ATA/USDT', 'ATOM/USDT', 'AUDIO/USDT', 'AVAX/USDT', 'AXS/USDT', \
+               'BAKE/USDT', 'BAND/USDT', 'BAT/USDT', 'BEL/USDT', 'BLUR/USDT', 'C98/USDT', 'CELO/USDT', 'CELR/USDT', \
+               'CFX/USDT', 'CHZ/USDT', 'CHR/USDT', 'COMBO/USDT', 'COMP/USDT', 'CRV/USDT', 'CTSI/USDT', 'DAR/USDT', \
+               'DASH/USDT',  'DENT/USDT', \
+               'DGB/USDT', 'DOGE/USDT', 'DOT/USDT', 'DUSK/USDT', 'DYDX/USDT', 'EDU/USDT', 'EGLD/USDT', 'ENJ/USDT', \
+               'ENS/USDT', 'FET/USDT', 'FIL/USDT', 'FLM/USDT', 'FLOW/USDT', 'FOOTBALL/USDT', 'FTM/USDT', 'FXS/USDT', \
+               'GALA/USDT', \
+               'GAL/USDT', 'GMT/USDT', 'GMX/USDT', 'GRT/USDT', 'GTC/USDT', 'HBAR/USDT', 'HIGH/USDT', 'HOOK/USDT', \
+               'ICP/USDT', 'ICX/USDT', 'ID/USDT', 'IMX/USDT', 'INJ/USDT', 'IOST/USDT', 'IOTA/USDT', 'JASMY/USDT', \
+               'JOE/USDT', 'KAVA/USDT', 'KEY/USDT', 'KSM/USDT', 'LDO/USDT', 'LINA/USDT', 'LINK/USDT', \
+               'LIT/USDT', \
+               'LPT/USDT', 'LQTY/USDT', 'LRC/USDT', 'LUNA2/USDT', 'MAGIC/USDT', 'MANA/USDT', 'MASK/USDT', \
+               'MATIC/USDT', 'MAV/USDT', 'MDT/USDT', 'MINA/USDT', 'MKR/USDT', 'MTL/USDT', 'NEAR/USDT', 'NEO/USDT', \
+               'NMR/USDT', 'NKN/USDT', \
+               'OCEAN/USDT', 'OGN/USDT', 'OMG/USDT', 'ONE/USDT', 'ONT/USDT', 'OP/USDT', 'PEOPLE/USDT', 'RDNT/USDT', \
+               'REEF/USDT', 'REN/USDT', 'RLC/USDT', 'RSR/USDT', \
+               'SFP/USDT', 'SNX/USDT', 'SOL/USDT', 'STG/USDT', 'STORJ/USDT', 'SUSHI/USDT', 'TOMO/USDT', 'TRB/USDT', \
+               'UNFI/USDT', 'WLD/USDT', 'WOO/USDT', 'YFI/USDT'
                ]  # 리스트 바꿨으면 밑에 종료 시 시간 측정하는 코드에서 심볼 바꿔줘야 함.
 
 # Initialize a dictionary to store the details of each symbol
@@ -103,7 +116,7 @@ while True:
                             # Calculate the time difference in minutes
                             time_diff = (server_datetime - entering_time).total_seconds() / 60
 
-                            if time_diff >= 181:
+                            if (time_diff >= 181 and time_diff <= 190) or (time_diff >= 661 and time_diff <= 670):
 
                                 if long_or_short == 'long':
                                     order = binance.create_market_sell_order(
@@ -144,13 +157,15 @@ while True:
                 if previous_minute is not None and current_minute != previous_minute:
 
                     # 계좌 잔고 체크
-                    if free_balance <= 130:
+                    if free_balance <= 75:
                         previous_minute = current_minute
                         symbol_details[symbol1]['previous_minute'] = previous_minute
                         continue
 
-                    if symbol1 == '1000LUNC/USDT':
+
+                    if symbol1 == '1000FLOKI/USDT':
                         time.sleep(1)
+
 
                     print(f'{server_datetime} 분이 바뀜. investment : {investment} / symbol : {symbol1}')
 
@@ -195,7 +210,7 @@ while True:
                             break
 
                     if decision:
-                        investment_amount = 2000 / last_open_price
+                        investment_amount = 500 / last_open_price
                         investment = True
                         short_enter_price = last_open_price * 0.985
                         long_enter_price = last_open_price * 1.015
