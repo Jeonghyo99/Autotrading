@@ -39,10 +39,10 @@ symbol_list = ['1000FLOKI/USDT', '1000LUNC/USDT', '1000PEPE/USDT', '1000SHIB/USD
                'LPT/USDT', 'LQTY/USDT', 'LRC/USDT', 'LUNA2/USDT', 'MAGIC/USDT', 'MANA/USDT', 'MASK/USDT', \
                'MATIC/USDT', 'MAV/USDT', 'MDT/USDT', 'MINA/USDT', 'MKR/USDT', 'MTL/USDT', 'NEAR/USDT', 'NEO/USDT', \
                'NMR/USDT', 'NKN/USDT', \
-               'OCEAN/USDT', 'OGN/USDT', 'OMG/USDT', 'ONE/USDT', 'ONT/USDT', 'OP/USDT', 'PEOPLE/USDT', 'RDNT/USDT', \
+               'OCEAN/USDT', 'OMG/USDT', 'ONE/USDT', 'ONT/USDT', 'OP/USDT', 'PEOPLE/USDT', 'RDNT/USDT', \
                'REEF/USDT', 'REN/USDT', 'RLC/USDT', 'RSR/USDT', \
                'SFP/USDT', 'SNX/USDT', 'SOL/USDT', 'STG/USDT', 'STORJ/USDT', 'SUSHI/USDT', 'TOMO/USDT', 'TRB/USDT', \
-               'UNFI/USDT', 'WLD/USDT', 'WOO/USDT', 'YFI/USDT'
+               'UNFI/USDT', 'WOO/USDT', 'YFI/USDT'
                ]  # 리스트 바꿨으면 밑에 종료 시 시간 측정하는 코드에서 심볼 바꿔줘야 함.
 
 # Initialize a dictionary to store the details of each symbol
@@ -113,6 +113,7 @@ while True:
                             print(f'진입 시간 : {entering_time}')
                             print('!!!!!!!!!!!!!!!********************!!!!!!!!!!!!!!!!!!!******************')
 
+                            '''
                             # Calculate the time difference in minutes
                             time_diff = (server_datetime - entering_time).total_seconds() / 60
 
@@ -142,14 +143,12 @@ while True:
                                 long_or_short = None
                                 entering_time = None
                                 recent_invest = server_datetime
+                            '''
 
                             if investment:
                                 # 이전 분 값을 현재 분 값으로 업데이트
                                 previous_minute = current_minute
                                 symbol_details[symbol1]['previous_minute'] = previous_minute
-
-                                # API 호출 제한을 피하기 위해 약간의 딜레이를 주는 것이 좋음
-                                # time.sleep(0.5)
 
                                 continue
 
@@ -157,7 +156,7 @@ while True:
                 if previous_minute is not None and current_minute != previous_minute:
 
                     # 계좌 잔고 체크
-                    if free_balance <= 75:
+                    if free_balance <= 160:
                         previous_minute = current_minute
                         symbol_details[symbol1]['previous_minute'] = previous_minute
                         continue
@@ -167,7 +166,7 @@ while True:
                         time.sleep(1)
 
 
-                    print(f'{server_datetime} 분이 바뀜. investment : {investment} / symbol : {symbol1}')
+                    # print(f'{server_datetime} 분이 바뀜. investment : {investment} / symbol : {symbol1}')
 
                     if recent_invest is None or server_datetime - recent_invest >= timedelta(minutes=61):
                         btc = binance.fetch_ohlcv(
@@ -210,10 +209,12 @@ while True:
                             break
 
                     if decision:
-                        investment_amount = 500 / last_open_price
+                        investment_amount = 1000 / last_open_price
                         investment = True
-                        short_enter_price = last_open_price * 0.985
-                        long_enter_price = last_open_price * 1.015
+                        short_enter_price = last_open_price * 0.95
+                        # short_enter_price = last_open_price * 0.995
+                        long_enter_price = last_open_price * 1.05
+                        # long_enter_price = last_open_price * 1.005
                         orders = [None] * 3
 
                         if long_or_short == 'short':
@@ -225,7 +226,7 @@ while True:
                                 amount=investment_amount,
                                 price=short_enter_price
                             )
-                            print('order1 okay')
+                            print(f'{symbol1} : order1 okay')
 
                             balance = binance.fetch_balance(params={"type": "future"})
                             positions = balance['info']['positions']
@@ -236,7 +237,28 @@ while True:
                                     entry_price = float(position['entryPrice'])
                                     break
 
-                            downprice = entry_price * 0.99
+                            if not entry_price > 0.0:
+                                open_orders = binance.fetch_open_orders(
+                                    symbol=symbol1
+                                )
+                                for order in open_orders:
+                                    binance.cancel_order(order['id'], symbol1)
+
+                                investment = False
+                                investment_amount = None
+                                long_or_short = None
+                                entering_time = None
+                                recent_invest = server_datetime
+                                previous_minute = current_minute
+                                symbol_details[symbol1]['previous_minute'] = previous_minute
+                                symbol_details[symbol1]['entering_time'] = entering_time
+                                symbol_details[symbol1]['investment'] = investment
+                                symbol_details[symbol1]['long_or_short'] = long_or_short
+                                symbol_details[symbol1]['investment_amount'] = investment_amount
+                                symbol_details[symbol1]['recent_invest'] = recent_invest
+                                continue
+
+                            downprice = entry_price * 0.99 if entry_price <= last_open_price * 0.99 else last_open_price * 0.99
 
                             print(entry_price)
 
@@ -251,7 +273,7 @@ while True:
                             )
                             print('order2 okay')
 
-                            upprice = entry_price * 1.01
+                            upprice = entry_price * 1.01 if entry_price >= last_open_price * 1.01 else last_open_price * 1.01
 
                             # stop loss
                             orders[2] = binance.create_order(
@@ -277,7 +299,7 @@ while True:
                                 amount=investment_amount,
                                 price=long_enter_price
                             )
-                            print('order1 okay')
+                            print(f'{symbol1} : order1 okay')
 
                             balance = binance.fetch_balance(params={"type": "future"})
                             positions = balance['info']['positions']
@@ -288,7 +310,28 @@ while True:
                                     entry_price = float(position['entryPrice'])
                                     break
 
-                            upprice = entry_price * 1.01
+                            if not entry_price > 0.0:
+                                open_orders = binance.fetch_open_orders(
+                                    symbol=symbol1
+                                )
+                                for order in open_orders:
+                                    binance.cancel_order(order['id'], symbol1)
+
+                                investment = False
+                                investment_amount = None
+                                long_or_short = None
+                                entering_time = None
+                                recent_invest = server_datetime
+                                previous_minute = current_minute
+                                symbol_details[symbol1]['previous_minute'] = previous_minute
+                                symbol_details[symbol1]['entering_time'] = entering_time
+                                symbol_details[symbol1]['investment'] = investment
+                                symbol_details[symbol1]['long_or_short'] = long_or_short
+                                symbol_details[symbol1]['investment_amount'] = investment_amount
+                                symbol_details[symbol1]['recent_invest'] = recent_invest
+                                continue
+
+                            upprice = entry_price * 1.01 if entry_price >= last_open_price * 1.01 else last_open_price * 1.01
 
                             print(entry_price)
 
@@ -303,7 +346,7 @@ while True:
                             )
                             print('order2 okay')
 
-                            downprice = entry_price * 0.99
+                            downprice = entry_price * 0.99 if entry_price <= last_open_price * 0.99 else last_open_price * 0.99
 
                             # stop loss
                             orders[2] = binance.create_order(
@@ -326,7 +369,7 @@ while True:
 
                     # 실행 시간 계산
                     execution_time = end_time - start_time
-                    print(f"Execution time: {execution_time} seconds")
+                    print(f"{server_datetime} Execution time: {execution_time} seconds")
 
                 # 이전 분 값을 현재 분 값으로 업데이트
                 previous_minute = current_minute
@@ -344,6 +387,11 @@ while True:
                 print(f"An error occurred: {e}")
                 previous_minute = current_minute
                 symbol_details[symbol1]['previous_minute'] = previous_minute
+                symbol_details[symbol1]['entering_time'] = entering_time
+                symbol_details[symbol1]['investment'] = investment
+                symbol_details[symbol1]['long_or_short'] = long_or_short
+                symbol_details[symbol1]['investment_amount'] = investment_amount
+                symbol_details[symbol1]['recent_invest'] = recent_invest
                 continue
 
         # API 호출 제한을 피하기 위해 약간의 딜레이를 주는 것이 좋음
