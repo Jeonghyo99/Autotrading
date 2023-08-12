@@ -30,18 +30,21 @@ symbol_list = ['1000FLOKI/USDT', '1000LUNC/USDT', '1000PEPE/USDT', '1000SHIB/USD
                'CFX/USDT', 'CHZ/USDT', 'CHR/USDT', 'COMBO/USDT', 'COMP/USDT', 'CTSI/USDT', \
                'DASH/USDT', \
                'DOGE/USDT', 'DOT/USDT', 'DUSK/USDT', 'DYDX/USDT', 'EDU/USDT', 'EGLD/USDT', 'ENJ/USDT', \
-               'ENS/USDT', 'FET/USDT', 'FIL/USDT', 'FOOTBALL/USDT', 'FTM/USDT', \
+               'ENS/USDT', 'FET/USDT', 'FIL/USDT', 'FOOTBALL/USDT', 'FTM/USDT', 'FXS/USDT', \
                'GALA/USDT', \
                'GAL/USDT', 'GMT/USDT', 'GMX/USDT', 'GRT/USDT', 'HBAR/USDT', 'HIGH/USDT', \
                'ICP/USDT', 'ICX/USDT', 'ID/USDT', 'IMX/USDT', 'INJ/USDT', 'IOST/USDT', 'IOTA/USDT', 'JASMY/USDT', \
-               'JOE/USDT', 'KAVA/USDT', 'KEY/USDT', 'KSM/USDT', 'LDO/USDT', 'LINA/USDT', 'LINK/USDT', \
+               'JOE/USDT', 'KAVA/USDT', 'KEY/USDT', 'KNC/USDT', 'KSM/USDT', 'LDO/USDT', 'LINA/USDT', 'LINK/USDT', \
                'LPT/USDT', 'LQTY/USDT', 'LRC/USDT', 'LUNA2/USDT', 'MAGIC/USDT', 'MANA/USDT', 'MASK/USDT', \
                'MATIC/USDT', 'MAV/USDT', 'MDT/USDT', 'MINA/USDT', 'MKR/USDT', 'MTL/USDT', 'NEAR/USDT', 'NEO/USDT', \
                'NMR/USDT', 'NKN/USDT', \
-               'OCEAN/USDT', 'OMG/USDT', 'ONE/USDT', 'ONT/USDT', 'OP/USDT', 'PEOPLE/USDT', 'RDNT/USDT', \
-               'REEF/USDT', 'REN/USDT', 'RLC/USDT', 'RSR/USDT', \
-               'SFP/USDT', 'SNX/USDT', 'SOL/USDT', 'STG/USDT', 'STORJ/USDT', 'SUSHI/USDT', 'TOMO/USDT', 'TRB/USDT', \
-               'WOO/USDT', 'YFI/USDT'
+               'OCEAN/USDT', 'OGN/USDT', 'OMG/USDT', 'ONE/USDT', 'ONT/USDT', 'OP/USDT', 'PEOPLE/USDT', 'RDNT/USDT', \
+               'REEF/USDT', 'REN/USDT', 'RLC/USDT', 'RNDR/USDT', 'ROSE/USDT', 'RSR/USDT', 'RVN/USDT', \
+               'SAND/USDT', 'SFP/USDT', 'SKL/USDT', 'SNX/USDT', 'SOL/USDT', 'SPELL/USDT', 'SSV/USDT', 'STG/USDT', \
+               'STORJ/USDT', 'STX/USDT', 'SUI/USDT', 'SUSHI/USDT', 'SXP/USDT', 'TOMO/USDT', 'THETA/USDT', 'TRB/USDT', \
+               'TRU/USDT', 'TRX/USDT', 'T/USDT', 'UNFI/USDT', 'UNI/USDT', 'USDC/USDT', 'VET/USDT', 'WAVES/USDT', \
+               'WLD/USDT', 'WOO/USDT', 'XLM/USDT', 'XMR/USDT', 'XVG/USDT', 'YFI/USDT', 'ZEC/USDT', 'ZEN/USDT', \
+               'ZIL/USDT', 'ZRX/USDT'
                ]  # 리스트 바꿨으면 밑에 종료 시 시간 측정하는 코드에서 심볼 바꿔줘야 함.
 
 # Initialize a dictionary to store the details of each symbol
@@ -84,78 +87,52 @@ while True:
                 from_invest = symbol_details[symbol1]['from_invest']
 
                 if previous_minute is not None and current_minute != previous_minute:
+                    if symbol1 == '1000FLOKI/USDT':
+                        time.sleep(1.5)
+
                     if investment:
 
                         open_orders = binance.fetch_open_orders(symbol=symbol1)
                         number_of_open_orders = len(open_orders)
                         limit_price = 0.0
+                        for order in open_orders:
+                            if order['type'] == 'limit':
+                                limit_price = order['price']
 
-                        if number_of_open_orders == 1:
+                        if number_of_open_orders == 1 or number_of_open_orders == 0:
                             investment = False
                             investment_amount = None
                             long_or_short = None
                             entering_time = None
                             recent_invest = server_datetime
-                            # from_invest = 1
-                            from_invest = 61
+                            from_invest = 2
 
                             for order in open_orders:
                                 binance.cancel_order(order['id'], symbol1)
 
-                            # 모든 포지션 정보 가져오기
-                            positions = binance.fapiPrivate_get_positionrisk()
-                            position_amt = 0
+                            balance = binance.fetch_balance(params={"type": "future"})
+                            positions = balance['info']['positions']
 
-                            # 해당 포지션 정보 찾기
-                            for pos in positions:
-                                if pos['symbol'] == symbol1.replace('/', ''):
-                                    position_amt = float(pos['positionAmt'])
-                                    break
+                            btc_position = next((position for position in positions \
+                                                 if position['symbol'] == symbol1.replace('/', '')), None)
 
-                            # 포지션 종료하기
-                            if position_amt > 0:  # LONG 포지션
-                                order = binance.create_market_order(symbol=symbol1, side="sell", amount=position_amt)
-                            elif position_amt < 0:  # SHORT 포지션
-                                order = binance.create_market_order(symbol=symbol1, side="buy", amount=-position_amt)
+                            if btc_position:
+                                position_amt = float(btc_position['positionAmt'])
+
+                                # 포지션 종료하기
+                                if position_amt > 0:  # LONG 포지션
+                                    order = binance.create_market_order(symbol=symbol1, side="sell",
+                                                                        amount=position_amt)
+                                elif position_amt < 0:  # SHORT 포지션
+                                    order = binance.create_market_order(symbol=symbol1, side="buy",
+                                                                        amount=-position_amt)
+
+                                print(f"{symbol1} closed. (number of open orders : {number_of_open_orders})")
+                            else:
+                                print(f"No {symbol1} position found.")
 
                         elif number_of_open_orders == 2:
-                            btc = binance.fetch_ohlcv(
-                                symbol=symbol1,
-                                timeframe='1m',
-                                since=None,
-                                limit=2
-                            )
-                            df = pd.DataFrame(btc, columns=['datetime', 'open', 'high', 'low', 'close', 'volume'])
-                            low = df.iloc[0]['low']
-                            high = df.iloc[0]['high']
 
-                            if low <= limit_price * 0.99 <= high or low <= limit_price * 1.01 <= high:
-                                investment = False
-                                investment_amount = None
-                                long_or_short = None
-                                entering_time = None
-                                recent_invest = server_datetime
-                                from_invest = 61
-
-                                for order in open_orders:
-                                    binance.cancel_order(order['id'], symbol1)
-
-                                print('The orders were canceled entirely because the low was reached before the order was executed.')
-
-                            else:
-                                print(f'{server_datetime} 분이 바뀜. investment : {investment} / symbol : {symbol1}')
-                                print(f'진입 시간 : {entering_time}')
-                                print('!!!!!!!!!!!!!!!********************!!!!!!!!!!!!!!!!!!!******************')
-
-                                # 이전 분 값을 현재 분 값으로 업데이트
-                                previous_minute = current_minute
-                                symbol_details[symbol1]['from_invest'] = from_invest
-                                symbol_details[symbol1]['previous_minute'] = previous_minute
-
-                                continue
-
-
-                        elif number_of_open_orders == 3:
                             print(f'{server_datetime} 분이 바뀜. investment : {investment} / symbol : {symbol1}')
                             print(f'진입 시간 : {entering_time}')
                             print('!!!!!!!!!!!!!!!********************!!!!!!!!!!!!!!!!!!!******************')
@@ -167,21 +144,16 @@ while True:
 
                             continue
 
-
                 # 이전 분 값과 현재 분 값이 다른 경우 (분이 넘어간 경우)
                 if previous_minute is not None and current_minute != previous_minute:
 
                     # 계좌 잔고 체크
-                    if free_balance <= 105:
+                    if free_balance <= 6:
                         previous_minute = current_minute
                         from_invest += 1
                         symbol_details[symbol1]['previous_minute'] = previous_minute
                         symbol_details[symbol1]['from_invest'] = from_invest
                         continue
-
-
-                    if symbol1 == '1000FLOKI/USDT':
-                        time.sleep(1.5)
 
 
                     # print(f'{server_datetime} 분이 바뀜. investment : {investment} / symbol : {symbol1}')
@@ -201,6 +173,7 @@ while True:
                             limit=from_invest
                         )
 
+                    from_invest += 1
 
                     df = pd.DataFrame(btc, columns=['datetime', 'open', 'high', 'low', 'close', 'volume'])
                     df['datetime'] = pd.to_datetime(df['datetime'], unit='ms')
@@ -222,19 +195,16 @@ while True:
                             break
 
                     if decision:
-                        investment_amount = 100 / last_open_price
+                        investment_amount = 40 / last_open_price
                         investment = True
                         short_enter_price = last_open_price
                         orders = [None] * 3
 
                         if long_or_short == 'short':
                             # limit price
-                            orders[0] = binance.create_order(
+                            orders[0] = binance.create_market_sell_order(
                                 symbol=symbol1,
-                                type="LIMIT",
-                                side="sell",
-                                amount=investment_amount,
-                                price=short_enter_price
+                                amount=investment_amount
                             )
                             print(f'{symbol1} : order1 okay')
 
@@ -251,16 +221,25 @@ while True:
 
                             print(entry_price)
 
-                            # take profit
-                            orders[1] = binance.create_order(
-                                symbol=symbol1,
-                                type="TAKE_PROFIT",
-                                side="buy",
-                                amount=investment_amount,
-                                price=downprice,
-                                params={'stopPrice': downprice, 'reduceOnly': True}
-                            )
-                            print('order2 okay')
+                            if 0.0 < entry_price <= downprice:
+                                # take profit
+                                orders[1] = binance.create_market_buy_order(
+                                    symbol=symbol1,
+                                    amount=investment_amount
+                                )
+                                print('order2 : market buy')
+
+                            else:
+                                # take profit
+                                orders[1] = binance.create_order(
+                                    symbol=symbol1,
+                                    type="TAKE_PROFIT",
+                                    side="buy",
+                                    amount=investment_amount,
+                                    price=downprice,
+                                    params={'stopPrice': downprice, 'reduceOnly': True}
+                                )
+                                print('order2 okay')
 
                             upprice = last_open_price * 1.01
 
@@ -289,7 +268,7 @@ while True:
                             free_balance = balance['USDT']['free']
 
 
-                if previous_minute is not None and current_minute != previous_minute and symbol1 == 'YFI/USDT':
+                if previous_minute is not None and current_minute != previous_minute and symbol1 == 'ZRX/USDT':
                     # 종료 시간 저장
                     end_time = time.time()
 
@@ -299,7 +278,6 @@ while True:
 
                 # 이전 분 값을 현재 분 값으로 업데이트
                 previous_minute = current_minute
-                # from_invest += 1
                 # Update the details of the symbol in the symbol_details dictionary
                 symbol_details[symbol1]['previous_minute'] = previous_minute
                 symbol_details[symbol1]['entering_time'] = entering_time
@@ -313,7 +291,6 @@ while True:
             except Exception as e:
                 print(f"An error occurred: {e}")
                 previous_minute = current_minute
-                from_invest += 1
                 symbol_details[symbol1]['previous_minute'] = previous_minute
                 symbol_details[symbol1]['entering_time'] = entering_time
                 symbol_details[symbol1]['investment'] = investment
@@ -324,11 +301,11 @@ while True:
                 continue
 
         # API 호출 제한을 피하기 위해 약간의 딜레이를 주는 것이 좋음
-        time.sleep(0.5)
+        time.sleep(1)
 
 
     except Exception as e:
         print(f"An error occurred: {e}")
-        time.sleep(0.5)
+        time.sleep(1)
         continue
 
